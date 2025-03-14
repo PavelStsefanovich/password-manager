@@ -511,7 +511,7 @@ class PasswordManagerMainWindow(QMainWindow):
         self.create_menu_bar()
 
         # Show login dialog
-        self.show_login_dialog()
+        # self.show_login_dialog() #REVIEW Is this necessary?
 
     def create_menu_bar(self):
         """Create the menu bar"""
@@ -547,21 +547,21 @@ class PasswordManagerMainWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
-    def show_login_dialog(self):
-        """Show the login dialog"""
-        dialog = LoginDialog(self, is_new_db=True)
-        result = dialog.exec_()
+    # def show_login_dialog(self): #REVIEW Is this necessary?
+    #     """Show the login dialog"""
+    #     dialog = LoginDialog(self, is_new_db=True)
+    #     result = dialog.exec_()
 
-        if result == QDialog.Accepted:
-            try:
-                self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
-                self.refresh_secrets_table()
-                self.status_bar.showMessage(f"Database: {dialog.db_path}", 3000)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
-                self.show_login_dialog()
-        else:
-            self.close()
+    #     if result == QDialog.Accepted:
+    #         try:
+    #             self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
+    #             self.refresh_secrets_table()
+    #             self.status_bar.showMessage(f"Database: {dialog.db_path}", 3000)
+    #         except Exception as e:
+    #             QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
+    #             self.show_login_dialog()
+    #     else:
+    #         self.close()
 
     def new_database(self):
         """Create a new database"""
