@@ -6,3 +6,6 @@ __pycache__
 *.db
 *.sqlite3
 *.cfg
+chat-gpt
+claude
+copilot
