@@ -27,7 +27,7 @@ class Secret:
     name: str = ""
     identity: str = ""
     secret: str = ""
-    application: str = ""
+    url: str = ""
     notes: str = ""
     created_at: datetime = None
     updated_at: datetime = None
@@ -138,7 +138,7 @@ class DatabaseManager:
                 name TEXT NOT NULL,
                 identity TEXT,
                 secret TEXT NOT NULL,
-                application TEXT,
+                url TEXT,
                 notes TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
@@ -159,13 +159,13 @@ class DatabaseManager:
         encrypted_notes = Encryption.encrypt(secret.notes, self.encryption_key) if secret.notes else b''
         
         self.cursor.execute('''
-            INSERT INTO secrets (name, identity, secret, application, notes, created_at, updated_at)
+            INSERT INTO secrets (name, identity, secret, url, notes, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             secret.name,
             encrypted_identity,
             encrypted_secret,
-            secret.application,
+            secret.url,
             encrypted_notes,
             secret.created_at.isoformat(),
             secret.updated_at.isoformat()
@@ -187,13 +187,13 @@ class DatabaseManager:
         
         self.cursor.execute('''
             UPDATE secrets 
-            SET name = ?, identity = ?, secret = ?, application = ?, notes = ?, updated_at = ?
+            SET name = ?, identity = ?, secret = ?, url = ?, notes = ?, updated_at = ?
             WHERE id = ?
         ''', (
             secret.name,
             encrypted_identity,
             encrypted_secret,
-            secret.application,
+            secret.url,
             encrypted_notes,
             secret.updated_at.isoformat(),
             secret.id
@@ -225,7 +225,7 @@ class DatabaseManager:
             name=row[1],
             identity=identity,
             secret=secret_value,
-            application=row[4],
+            url=row[4],
             notes=notes,
             created_at=datetime.fromisoformat(row[6]),
             updated_at=datetime.fromisoformat(row[7])
@@ -248,7 +248,7 @@ class DatabaseManager:
                 name=row[1],
                 identity=identity,
                 secret=secret_value,
-                application=row[4],
+                url=row[4],
                 notes=notes,
                 created_at=datetime.fromisoformat(row[6]),
                 updated_at=datetime.fromisoformat(row[7])
@@ -284,7 +284,7 @@ class SecretDialog(QDialog):
         secret_layout.addWidget(self.secret_input)
         secret_layout.addWidget(self.show_secret_btn)
         
-        self.application_input = QLineEdit(self.secret.application)
+        self.url_input = QLineEdit(self.secret.url)
         self.notes_input = QTextEdit()
         self.notes_input.setText(self.secret.notes)
         self.notes_input.setMinimumHeight(100)
@@ -292,7 +292,7 @@ class SecretDialog(QDialog):
         form_layout.addRow("Name:", self.name_input)
         form_layout.addRow("Identity:", self.identity_input)
         form_layout.addRow("Secret:", secret_layout)
-        form_layout.addRow("Application:", self.application_input)
+        form_layout.addRow("URL:", self.url_input)
         form_layout.addRow("Notes:", self.notes_input)
         
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -323,7 +323,7 @@ class SecretDialog(QDialog):
         self.secret.name = self.name_input.text().strip()
         self.secret.identity = self.identity_input.text().strip()
         self.secret.secret = self.secret_input.text().strip()
-        self.secret.application = self.application_input.text().strip()
+        self.secret.url = self.url_input.text().strip()
         self.secret.notes = self.notes_input.toPlainText().strip()
         
         super().accept()
@@ -469,7 +469,7 @@ class PasswordManagerMainWindow(QMainWindow):
         # Create table for secrets
         self.secrets_table = QTableWidget()
         self.secrets_table.setColumnCount(5)
-        self.secrets_table.setHorizontalHeaderLabels(["ID", "Name", "Identity", "Application", "Last Updated"])
+        self.secrets_table.setHorizontalHeaderLabels(["ID", "Name", "Identity", "URL", "Last Updated"])
         self.secrets_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.secrets_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.secrets_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
@@ -647,7 +647,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 secrets = [s for s in secrets if (
                     search_term in s.name.lower() or 
                     search_term in s.identity.lower() or 
-                    search_term in s.application.lower()
+                    search_term in s.url.lower()
                 )]
             
             # Populate the table
@@ -656,7 +656,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.secrets_table.setItem(i, 0, QTableWidgetItem(str(secret.id)))
                 self.secrets_table.setItem(i, 1, QTableWidgetItem(secret.name))
                 self.secrets_table.setItem(i, 2, QTableWidgetItem(secret.identity))
-                self.secrets_table.setItem(i, 3, QTableWidgetItem(secret.application))
+                self.secrets_table.setItem(i, 3, QTableWidgetItem(secret.url))
                 self.secrets_table.setItem(i, 4, QTableWidgetItem(secret.updated_at.strftime("%Y-%m-%d %H:%M")))
             
             self.status_bar.showMessage(f"Displaying {len(secrets)} secrets", 3000)
@@ -745,7 +745,7 @@ class PasswordManagerMainWindow(QMainWindow):
             dialog.name_input.setReadOnly(True)
             dialog.identity_input.setReadOnly(True)
             dialog.secret_input.setReadOnly(True)
-            dialog.application_input.setReadOnly(True)
+            dialog.url_input.setReadOnly(True)
             dialog.notes_input.setReadOnly(True)
             dialog.exec_()
         except Exception as e:
