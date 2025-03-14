@@ -484,11 +484,18 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Create table for secrets
         self.secrets_table = QTableWidget()
-        self.secrets_table.setColumnCount(5)
-        self.secrets_table.setHorizontalHeaderLabels(["ID", "Name", "Identity", "URL", "Last Updated"])
-        self.secrets_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.secrets_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.secrets_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.secrets_table.setColumnCount(4)
+        self.secrets_table.setHorizontalHeaderLabels(["Name", "Identity", "URL", "Last Updated"])
+
+        # Change from setSectionResizeMode to setResizeMode to allow manual column resizing
+        self.secrets_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+
+        # Set initial column widths but allow users to resize
+        self.secrets_table.horizontalHeader().setStretchLastSection(True)
+
+        self.secrets_table.setColumnWidth(0, 200)
+        self.secrets_table.setColumnWidth(1, 150)
+        self.secrets_table.setColumnWidth(2, 150)
         self.secrets_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.secrets_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.secrets_table.doubleClicked.connect(self.view_secret)
@@ -550,7 +557,7 @@ class PasswordManagerMainWindow(QMainWindow):
     # def show_login_dialog(self): #REVIEW Is this necessary?
     #     """Show the login dialog"""
     #     dialog = LoginDialog(self, is_new_db=True)
-    #     result = dialog.exec_()
+    #     result = dialog.exec()
 
     #     if result == QDialog.Accepted:
     #         try:
@@ -566,7 +573,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def new_database(self):
         """Create a new database"""
         dialog = LoginDialog(self, is_new_db=True)
-        result = dialog.exec_()
+        result = dialog.exec()
 
         if result == QDialog.Accepted:
             try:
@@ -582,7 +589,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def open_database(self):
         """Open an existing database"""
         dialog = LoginDialog(self, is_new_db=False)
-        result = dialog.exec_()
+        result = dialog.exec()
 
         if result == QDialog.Accepted:
             try:
@@ -679,25 +686,24 @@ class PasswordManagerMainWindow(QMainWindow):
             # Populate the table
             for i, secret in enumerate(secrets):
                 self.secrets_table.insertRow(i)
-                self.secrets_table.setItem(i, 0, SortableTableWidgetItem(str(secret.id)))
 
-                # For columns that need to be sorted correctly
+                # Store the ID as hidden data in the first column
                 name_item = SortableTableWidgetItem(secret.name)
-                name_item.setData(Qt.UserRole, secret.name)
-                self.secrets_table.setItem(i, 1, name_item)
+                name_item.setData(Qt.UserRole, secret.name.lower())  # For sorting
+                name_item.setData(Qt.UserRole + 1, secret.id)  # Store ID for reference
+                self.secrets_table.setItem(i, 0, name_item)
 
                 identity_item = SortableTableWidgetItem(secret.identity)
-                identity_item.setData(Qt.UserRole, secret.identity)
-                self.secrets_table.setItem(i, 2, identity_item)
+                identity_item.setData(Qt.UserRole, secret.identity.lower())
+                self.secrets_table.setItem(i, 1, identity_item)
 
                 app_item = SortableTableWidgetItem(secret.url)
-                app_item.setData(Qt.UserRole, secret.url)
-                self.secrets_table.setItem(i, 3, app_item)
+                app_item.setData(Qt.UserRole, secret.url.lower())
+                self.secrets_table.setItem(i, 2, app_item)
 
-                # For date columns, store timestamp for proper sorting
                 date_item = SortableTableWidgetItem(secret.updated_at.strftime("%Y-%m-%d %H:%M"))
                 date_item.setData(Qt.UserRole, secret.updated_at.timestamp())
-                self.secrets_table.setItem(i, 4, date_item)
+                self.secrets_table.setItem(i, 3, date_item)
 
             # Restore sorting
             self.secrets_table.setSortingEnabled(True)
@@ -718,7 +724,7 @@ class PasswordManagerMainWindow(QMainWindow):
             return
 
         dialog = SecretDialog(self)
-        result = dialog.exec_()
+        result = dialog.exec()
 
         if result == QDialog.Accepted:
             try:
@@ -741,7 +747,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Get the selected secret ID
         selected_row = selected_rows[0].row()
-        secret_id = int(self.secrets_table.item(selected_row, 0).text())
+        secret_id = self.secrets_table.item(selected_row, 0).data(Qt.UserRole + 1)
 
         try:
             # Get the secret from the database
@@ -752,7 +758,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
             # Show the edit dialog
             dialog = SecretDialog(self, secret)
-            result = dialog.exec_()
+            result = dialog.exec()
 
             if result == QDialog.Accepted:
                 # Update the secret in the database
@@ -773,7 +779,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Get the selected secret ID
         selected_row = selected_rows[0].row()
-        secret_id = int(self.secrets_table.item(selected_row, 0).text())
+        secret_id = self.secrets_table.item(selected_row, 0).data(Qt.UserRole + 1)
 
         try:
             # Get the secret from the database
@@ -791,7 +797,7 @@ class PasswordManagerMainWindow(QMainWindow):
             dialog.secret_input.setReadOnly(True)
             dialog.url_input.setReadOnly(True)
             dialog.notes_input.setReadOnly(True)
-            dialog.exec_()
+            dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to view secret: {str(e)}")
 
@@ -807,8 +813,8 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Get the selected secret ID
         selected_row = selected_rows[0].row()
-        secret_id = int(self.secrets_table.item(selected_row, 0).text())
-        secret_name = self.secrets_table.item(selected_row, 1).text()
+        secret_id = self.secrets_table.item(selected_row, 0).data(Qt.UserRole + 1)  # Get ID from data
+        secret_name = self.secrets_table.item(selected_row, 0).text()  # Now it's the first column
 
         # Confirm deletion
         confirm = QMessageBox.question(
