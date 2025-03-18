@@ -1,9 +1,12 @@
 import os
+import platform
 import sys
 import base64
 import sqlite3
 import hashlib
-import secrets
+import json
+# import secrets
+from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
 from dataclasses import dataclass
@@ -18,6 +21,9 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QFileDialog, QStackedWidget)
 from PySide6.QtCore import Qt, Slot, Signal, QSize
 from PySide6.QtGui import QIcon, QFont, QAction
+
+
+APP_NAME = "SimplePasswordManager"
 
 
 @dataclass
@@ -332,12 +338,22 @@ class SecretDialog(QDialog):
 class LoginDialog(QDialog):
     """Dialog for entering master password"""
 
-    def __init__(self, parent=None, is_new_db=False):
+    def __init__(self, parent=None, main_config={}, is_new_db=False):
         super().__init__(parent)
-        self.is_new_db = is_new_db
+        self.main_config = main_config
         self.password = ""
         self.db_path = ""
+        self.is_new_db = is_new_db
         self.setup_ui()
+
+    def check_db_configured(self):
+        if not self.is_new_db:
+            self.is_new_db = True
+            if self.main_config.get("db_path"):
+                db_file_path = Path(self.main_config["db_path"])
+                if db_file_path.exists():
+                    self.is_new_db = False
+                    self.file_path_input.setText(db_file_path.as_posix())
 
     def setup_ui(self):
         """Set up the dialog UI"""
@@ -353,6 +369,7 @@ class LoginDialog(QDialog):
 
         self.file_path_input = QLineEdit()
         self.file_path_input.setReadOnly(True)
+        self.check_db_configured()
         self.browse_button = QPushButton("Browse")
         self.browse_button.clicked.connect(self.browse_file)
 
@@ -446,10 +463,11 @@ class SortableTableWidgetItem(QTableWidgetItem):
 class PasswordManagerMainWindow(QMainWindow):
     """Main window for the Password Manager application"""
 
-    def __init__(self):
+    def __init__(self, main_config):
         super().__init__()
         self.db_manager = None
         self.current_search = ""
+        self.main_config = main_config
         self.setup_ui()
 
     def setup_ui(self):
@@ -518,7 +536,7 @@ class PasswordManagerMainWindow(QMainWindow):
         self.create_menu_bar()
 
         # Show login dialog
-        # self.show_login_dialog() #REVIEW Is this necessary?
+        self.show_login_dialog()
 
     def create_menu_bar(self):
         """Create the menu bar"""
@@ -554,33 +572,34 @@ class PasswordManagerMainWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
-    # def show_login_dialog(self): #REVIEW Is this necessary?
-    #     """Show the login dialog"""
-    #     dialog = LoginDialog(self, is_new_db=True)
-    #     result = dialog.exec()
+    def show_login_dialog(self):
+        """Show the login dialog"""
+        dialog = LoginDialog(self, main_config=self.main_config)
+        result = dialog.exec()
 
-    #     if result == QDialog.Accepted:
-    #         try:
-    #             self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
-    #             self.refresh_secrets_table()
-    #             self.status_bar.showMessage(f"Database: {dialog.db_path}", 3000)
-    #         except Exception as e:
-    #             QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
-    #             self.show_login_dialog()
-    #     else:
-    #         self.close()
+        if result == QDialog.Accepted:
+            try:
+                self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
+                self.update_main_config(merge_dict={"db_path": dialog.db_path})
+                self.refresh_secrets_table()
+                self.status_bar.showMessage(f"Database: {dialog.db_path}", 3000)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
+                self.show_login_dialog()
+        else:
+            self.close()
 
     def new_database(self):
         """Create a new database"""
-        dialog = LoginDialog(self, is_new_db=True)
+        dialog = LoginDialog(self, main_config=self.main_config, is_new_db=True)
         result = dialog.exec()
 
         if result == QDialog.Accepted:
             try:
                 if self.db_manager:
                     self.db_manager.close()
-
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
+                self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
                 self.status_bar.showMessage(f"New database created: {dialog.db_path}", 3000)
             except Exception as e:
@@ -588,19 +607,25 @@ class PasswordManagerMainWindow(QMainWindow):
 
     def open_database(self):
         """Open an existing database"""
-        dialog = LoginDialog(self, is_new_db=False)
+        dialog = LoginDialog(self, main_config=self.main_config)
         result = dialog.exec()
 
         if result == QDialog.Accepted:
             try:
                 if self.db_manager:
                     self.db_manager.close()
-
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
+                self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
                 self.status_bar.showMessage(f"Database opened: {dialog.db_path}", 3000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
+
+    def update_main_config(self, merge_dict):
+        """Shallowly merges merge_dict with main_config and saves to disk"""
+        self.main_config = {**self.main_config, **merge_dict}
+        with Path(self.main_config["config_path"]).open("w") as f:
+            json.dump(self.main_config, f, indent=4)
 
     def change_master_password(self):
         """Change the master password"""
@@ -853,6 +878,35 @@ class PasswordManagerMainWindow(QMainWindow):
         event.accept()
 
 
+def load_app_config(app_name):
+    system = platform.system()
+    if system == "Windows":
+        config_dir = Path(os.getenv("LOCALAPPDATA")) / app_name  # C:\Users\Username\AppData\Roaming\YourApp
+    elif system == "Linux":
+        config_dir = Path.home() / ".config" / app_name  # /home/username/.config/YourApp
+    elif system == "Darwin":  # macOS
+        config_dir = Path.home() / "Library" / "Application Support" / app_name  # /Users/username/Library/Application Support/YourApp
+    else:
+        raise RuntimeError("Unsupported OS")
+
+    # Ensure the directory exists
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load the configuration file
+    config_path = config_dir / "config.json"
+    if config_path.exists():
+        # Read existing file
+        with config_path.open("r", encoding="utf-8") as f:
+            config_data = json.load(f)
+    else:
+        # Create file with default content
+        config_data = {"config_path": config_path.as_posix()}
+        with config_path.open("w", encoding="utf-8") as f:
+            json.dump(config_data, f, indent=4)
+
+    return config_data
+
+
 def main():
     """Main function to run the application"""
     # Make sure required packages are available
@@ -865,14 +919,17 @@ def main():
         print("pip install pyside6 cryptography")
         return
 
+    # Load (or create) app config from the OS-specific configuration location
+    main_config = load_app_config(APP_NAME)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 
     # Set application icon and name
-    app.setApplicationName("Secure Password Manager")
+    app.setApplicationName(APP_NAME)
 
     # Create and show the main window
-    main_window = PasswordManagerMainWindow()
+    main_window = PasswordManagerMainWindow(main_config)
     main_window.show()
 
     # Run the application
