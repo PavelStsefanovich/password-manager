@@ -348,11 +348,9 @@ class LoginDialog(QDialog):
 
     def check_db_configured(self):
         if not self.is_new_db:
-            self.is_new_db = True
             if self.main_config.get("db_path"):
                 db_file_path = Path(self.main_config["db_path"])
                 if db_file_path.exists():
-                    self.is_new_db = False
                     self.file_path_input.setText(db_file_path.as_posix())
 
     def setup_ui(self):
@@ -582,7 +580,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.status_bar.showMessage(f"Database: {dialog.db_path}", 3000)
+                self.status_bar.setStyleSheet("")
+                self.status_bar.showMessage(f"Database: {dialog.db_path}", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
                 self.show_login_dialog()
@@ -601,7 +600,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.status_bar.showMessage(f"New database created: {dialog.db_path}", 3000)
+                self.status_bar.setStyleSheet("color: lightgreen")
+                self.status_bar.showMessage(f"New database created: {dialog.db_path}", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to create database: {str(e)}")
 
@@ -617,7 +617,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.status_bar.showMessage(f"Database opened: {dialog.db_path}", 3000)
+                self.status_bar.setStyleSheet("")
+                self.status_bar.showMessage(f"Database opened: {dialog.db_path}", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to open database: {str(e)}")
 
@@ -630,6 +631,8 @@ class PasswordManagerMainWindow(QMainWindow):
     def change_master_password(self):
         """Change the master password"""
         if not self.db_manager:
+            self.status_bar.setStyleSheet("color: red;")
+            self.status_bar.showMessage(f"Please open a database first.")
             return
 
         # Get the new password
@@ -734,7 +737,8 @@ class PasswordManagerMainWindow(QMainWindow):
             self.secrets_table.setSortingEnabled(True)
             self.secrets_table.horizontalHeader().setSortIndicator(sort_column, sort_order)
 
-            self.status_bar.showMessage(f"Displaying {len(secrets)} secrets", 3000)
+            self.status_bar.setStyleSheet("")
+            self.status_bar.showMessage(f"Displaying {len(secrets)} secrets", 6000)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load secrets: {str(e)}")
 
@@ -756,7 +760,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 # Add the secret to the database
                 self.db_manager.add_secret(dialog.secret)
                 self.refresh_secrets_table()
-                self.status_bar.showMessage("Secret added successfully", 3000)
+                self.status_bar.setStyleSheet("color: lightgreen")
+                self.status_bar.showMessage("Secret added successfully", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to add secret: {str(e)}")
 
@@ -789,7 +794,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 # Update the secret in the database
                 self.db_manager.update_secret(dialog.secret)
                 self.refresh_secrets_table()
-                self.status_bar.showMessage("Secret updated successfully", 3000)
+                self.status_bar.setStyleSheet("color: lightgreen")
+                self.status_bar.showMessage("Secret updated successfully", 6000)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to edit secret: {str(e)}")
 
@@ -853,7 +859,8 @@ class PasswordManagerMainWindow(QMainWindow):
                 # Delete the secret from the database
                 self.db_manager.delete_secret(secret_id)
                 self.refresh_secrets_table()
-                self.status_bar.showMessage("Secret deleted successfully", 3000)
+                self.status_bar.setStyleSheet("color: lightgreen")
+                self.status_bar.showMessage("Secret deleted successfully", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete secret: {str(e)}")
 
