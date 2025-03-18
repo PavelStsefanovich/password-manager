@@ -542,8 +542,10 @@ class PasswordManagerMainWindow(QMainWindow):
             self.permanent_label.deleteLater()
         if db_path:
             self.permanent_label = QLabel(f"Vault: {db_path}")
-            self.status_bar.setStyleSheet("")
-            self.status_bar.addPermanentWidget(self.permanent_label)
+        else:
+            self.permanent_label = QLabel("<span style='color:red;'>No vault is open</span>")
+        self.status_bar.addPermanentWidget(self.permanent_label)
+        self.status_bar.setStyleSheet("")
 
     def create_menu_bar(self):
         """Create the menu bar"""
@@ -595,6 +597,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Failed to open vault: {str(e)}")
                 self.show_login_dialog()
         else:
+            self.display_current_vault()
             self.close()
 
     def new_database(self):
@@ -642,7 +645,7 @@ class PasswordManagerMainWindow(QMainWindow):
         if not self.db_manager:
             self.display_current_vault()
             self.status_bar.setStyleSheet("color: red;")
-            self.status_bar.showMessage(f"Please open a vault first.", 6000)
+            self.status_bar.showMessage(f"Please open a vault first", 6000)
             return
 
         # Get the new password
