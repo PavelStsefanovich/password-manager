@@ -5,6 +5,8 @@ import base64
 import sqlite3
 import hashlib
 import json
+import shutil
+import tempfile
 # import secrets
 from pathlib import Path
 from typing import List, Optional
@@ -670,7 +672,7 @@ class PasswordManagerMainWindow(QMainWindow):
         try:
             # Create a new database with the new password
             db_path = self.db_manager.db_path
-            temp_db_path = db_path + ".tmp"
+            temp_db_path = (Path(tempfile.gettempdir()) / (Path(db_path).name + '.tmp')).as_posix()
 
             # Get all secrets from current database
             all_secrets = self.db_manager.get_all_secrets()
@@ -687,7 +689,8 @@ class PasswordManagerMainWindow(QMainWindow):
             new_db.close()
 
             # Replace old database with new one
-            os.replace(temp_db_path, db_path)
+            shutil.copy(temp_db_path, db_path)
+            os.remove(temp_db_path)
 
             # Reopen the database
             self.db_manager = DatabaseManager(db_path, new_password)
@@ -695,6 +698,8 @@ class PasswordManagerMainWindow(QMainWindow):
             QMessageBox.information(self, "Success", "Master password changed successfully")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to change master password: {str(e)}")
+            if Path(temp_db_path).exists():
+                os.remove(temp_db_path)
 
     def delete_vault(self):
         pass
