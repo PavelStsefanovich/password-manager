@@ -1,28 +1,26 @@
-import os
-import platform
-import sys
 import base64
-import sqlite3
 import hashlib
 import json
+import os
+import platform
 import shutil
+import sqlite3
+import sys
 import tempfile
-# import secrets
-from pathlib import Path
-from typing import List, Optional
-from datetime import datetime
-from dataclasses import dataclass
-
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from datetime import datetime
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction #, QIcon
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-                             QMessageBox, QDialog, QTextEdit, QHeaderView, QComboBox, QFormLayout,
-                             QTabWidget, QGroupBox, QGridLayout, QDialogButtonBox, QInputDialog,
-                             QFileDialog, QStackedWidget)
-from PySide6.QtCore import Qt, Slot, Signal, QSize
-from PySide6.QtGui import QIcon, QFont, QAction
+                             QMessageBox, QDialog, QTextEdit, QHeaderView, QFormLayout,
+                             QGroupBox, QDialogButtonBox, QInputDialog, QFileDialog)
+
 
 
 APP_NAME = "SimplePasswordManager"
@@ -712,10 +710,10 @@ class PasswordManagerMainWindow(QMainWindow):
             self.status_bar.showMessage(f"Please open a vauflt first", 6000)
             return
 
-        try:        
+        try:
             self.status_bar.setStyleSheet("color: darkorange;")
             db_path = self.db_manager.db_path
-            
+
             # Confirm the new password
             confirm_delete, ok = QInputDialog.getText(
                 self, "Delete vault", "Please type 'DELETE' to confirm:",
@@ -988,6 +986,7 @@ def main():
 
     # Set application icon and name
     app.setApplicationName(APP_NAME)
+    # app.setWindowIcon(QIcon('favicon.png'))
 
     # Create and show the main window
     main_window = PasswordManagerMainWindow(main_config)
