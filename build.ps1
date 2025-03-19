@@ -1,0 +1,1 @@
+pyinstaller.exe -i resources/images/favicon.ico -n SimplePasswordManager --onefile --windowed --add-data "resources/images/*:resources/images" main.py

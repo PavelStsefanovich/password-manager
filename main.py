@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction #, QIcon
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
                              QMessageBox, QDialog, QTextEdit, QHeaderView, QFormLayout,
@@ -937,6 +937,18 @@ class PasswordManagerMainWindow(QMainWindow):
         event.accept()
 
 
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    if getattr(sys, 'frozen', False):
+        # Running in a bundle
+        base_path = sys._MEIPASS
+    else:
+        # Running in normal Python environment
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
+
 def load_app_config(app_name):
     system = platform.system()
     if system == "Windows":
@@ -986,7 +998,8 @@ def main():
 
     # Set application icon and name
     app.setApplicationName(APP_NAME)
-    # app.setWindowIcon(QIcon('favicon.png'))
+    app_icon = QIcon(resource_path("resources/images/favicon.png"))
+    app.setWindowIcon(app_icon)
 
     # Create and show the main window
     main_window = PasswordManagerMainWindow(main_config)
