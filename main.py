@@ -477,15 +477,7 @@ class PasswordManagerMainWindow(QMainWindow):
         central_widget = QWidget()
         main_layout = QVBoxLayout(central_widget)
 
-        # Create search bar
-        search_layout = QHBoxLayout()
-        search_label = QLabel("Search:")
-        self.search_input = QLineEdit()
-        self.search_input.textChanged.connect(self.search_secrets)
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_input)
-
-        # Create buttons
+        # Create buttons and search bar
         button_layout = QHBoxLayout()
         self.add_button = QPushButton("Add Secret")
         self.add_button.clicked.connect(self.add_secret)
@@ -493,10 +485,15 @@ class PasswordManagerMainWindow(QMainWindow):
         self.edit_button.clicked.connect(self.edit_secret)
         self.delete_button = QPushButton("Delete Secret")
         self.delete_button.clicked.connect(self.delete_secret)
+        search_label = QLabel("Search:")
+        self.search_input = QLineEdit()
+        self.search_input.textChanged.connect(self.search_secrets)        
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.edit_button)
         button_layout.addWidget(self.delete_button)
         button_layout.addStretch()
+        button_layout.addWidget(search_label)
+        button_layout.addWidget(self.search_input)        
 
         # Create table for secrets
         self.secrets_table = QTableWidget()
@@ -520,7 +517,6 @@ class PasswordManagerMainWindow(QMainWindow):
         self.secrets_table.setSortingEnabled(True)
 
         # Add widgets to main layout
-        main_layout.addLayout(search_layout)
         main_layout.addLayout(button_layout)
         main_layout.addWidget(self.secrets_table)
 
@@ -793,7 +789,7 @@ class PasswordManagerMainWindow(QMainWindow):
             self.secrets_table.setSortingEnabled(True)
             self.secrets_table.horizontalHeader().setSortIndicator(sort_column, sort_order)
 
-            self.status_bar.showMessage(f"Displaying {len(secrets)} secrets", 6000)
+            self.status_bar.showMessage(f"Displaying {len(secrets)} secret(s)", 2000)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load secrets: {str(e)}")
 
