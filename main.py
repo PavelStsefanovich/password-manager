@@ -994,7 +994,7 @@ def main():
 
     # Set application icon and name
     app.setApplicationName(APP_NAME)
-    app_icon = QIcon(resource_path("resources/images/favicon.png"))
+    app_icon = QIcon(resource_path("resources/images/favicon.icns")) #TODO Make OS-specific
     app.setWindowIcon(app_icon)
 
     # Create and show the main window
