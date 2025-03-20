@@ -368,6 +368,12 @@ class SecretDialog(QDialog):
 
         self.setLayout(main_layout)
 
+        # Set custom tab order to prioritize text input widgets
+        QWidget.setTabOrder(self.name_input, self.identity_input)
+        QWidget.setTabOrder(self.identity_input, self.secret_input)
+        QWidget.setTabOrder(self.secret_input, self.url_input)
+        QWidget.setTabOrder(self.url_input, self.notes_input)
+
     def copy_to_clipboard(self, text):
         self.clipboard.setText(text)
         self.status_bar.setStyleSheet("color: green;")
