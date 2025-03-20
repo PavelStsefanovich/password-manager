@@ -15,15 +15,26 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction, QIcon, QPalette
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
                              QMessageBox, QDialog, QTextEdit, QHeaderView, QFormLayout,
-                             QGroupBox, QDialogButtonBox, QInputDialog, QFileDialog)
+                             QGroupBox, QDialogButtonBox, QInputDialog, QFileDialog, QStatusBar)
 
 
 
 APP_NAME = "SimplePasswordManager"
+OS_CONFIG = { # Add any platform-specific config
+    "windows": {
+        "icon_ext": ".ico"
+    },
+    "linux": {
+        "icon_ext": ".png"
+    },
+    "mados": {
+        "icon_ext": ".icns"
+    }
+}
 
 
 @dataclass
@@ -266,39 +277,71 @@ class DatabaseManager:
 class SecretDialog(QDialog):
     """Dialog for adding or editing secrets"""
 
-    def __init__(self, parent=None, secret=None):
+    def __init__(self, parent=None, secret=None, main_config={}, read_only=False):
         super().__init__(parent)
         self.secret = secret or Secret()
+        self.read_only = read_only
+        self.main_config = main_config
+        self.clipboard = QApplication.clipboard()
         self.setup_ui()
 
     def setup_ui(self):
         """Set up the dialog UI"""
-        self.setWindowTitle("Add Secret" if not self.secret.id else "Edit Secret")
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(450)
 
         form_layout = QFormLayout()
 
         self.name_input = QLineEdit(self.secret.name)
+
         self.identity_input = QLineEdit(self.secret.identity)
+        self.copy_identity_btn = QPushButton()
+        self.copy_identity_btn.setToolTip("Copy to clipboard")
+        self.copy_identity_btn.setMaximumWidth(30)          
+        self.copy_identity_btn.setIcon(QIcon.fromTheme("edit-copy"))
+        self.copy_identity_btn.clicked.connect(lambda checked=False, field=self.identity_input: self.copy_to_clipboard(field.text()))
+
+        identity_layout = QHBoxLayout()
+        identity_layout.addWidget(self.identity_input)
+        identity_layout.addWidget(self.copy_identity_btn)
+
         self.secret_input = QLineEdit(self.secret.secret)
         self.secret_input.setEchoMode(QLineEdit.Password)
-        self.show_secret_btn = QPushButton("Show")
+        self.show_secret_btn = QPushButton()
+        self.show_secret_btn.setToolTip("Show secret value")
+        self.show_secret_btn.setMaximumWidth(30)          
+        self.show_secret_btn.setIcon(QIcon(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
         self.show_secret_btn.setCheckable(True)
         self.show_secret_btn.toggled.connect(self.toggle_secret_visibility)
+        self.copy_secret_btn = QPushButton()
+        self.copy_secret_btn.setToolTip("Copy to clipboard")
+        self.copy_secret_btn.setMaximumWidth(30)          
+        self.copy_secret_btn.setIcon(QIcon.fromTheme("edit-copy"))
+        self.copy_secret_btn.clicked.connect(lambda checked=False, field=self.secret_input: self.copy_to_clipboard(field.text()))
 
         secret_layout = QHBoxLayout()
         secret_layout.addWidget(self.secret_input)
         secret_layout.addWidget(self.show_secret_btn)
+        secret_layout.addWidget(self.copy_secret_btn)
 
         self.url_input = QLineEdit(self.secret.url)
+        self.copy_url_btn = QPushButton()
+        self.copy_url_btn.setToolTip("Copy to clipboard")
+        self.copy_url_btn.setMaximumWidth(30)          
+        self.copy_url_btn.setIcon(QIcon.fromTheme("edit-copy"))
+        self.copy_url_btn.clicked.connect(lambda checked=False, field=self.url_input: self.copy_to_clipboard(field.text()))
+
+        url_layout = QHBoxLayout()
+        url_layout.addWidget(self.url_input)
+        url_layout.addWidget(self.copy_url_btn)        
+
         self.notes_input = QTextEdit()
         self.notes_input.setText(self.secret.notes)
         self.notes_input.setMinimumHeight(100)
 
         form_layout.addRow("Name:", self.name_input)
-        form_layout.addRow("Identity:", self.identity_input)
+        form_layout.addRow("Identity:", identity_layout)
         form_layout.addRow("Secret:", secret_layout)
-        form_layout.addRow("URL:", self.url_input)
+        form_layout.addRow("URL:", url_layout)
         form_layout.addRow("Notes:", self.notes_input)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -309,11 +352,35 @@ class SecretDialog(QDialog):
         main_layout.addLayout(form_layout)
         main_layout.addWidget(button_box)
 
+        if self.read_only:
+            self.setWindowTitle("View Secret")
+            self.name_input.setReadOnly(True)
+            self.identity_input.setReadOnly(True)
+            self.secret_input.setReadOnly(True)
+            self.url_input.setReadOnly(True)
+            self.notes_input.setReadOnly(True)
+        else:
+            self.setWindowTitle("Add Secret" if not self.secret.id else "Edit Secret")  
+
+        self.status_bar = QStatusBar()
+        main_layout.addStretch()
+        main_layout.addWidget(self.status_bar)
+
         self.setLayout(main_layout)
+
+    def copy_to_clipboard(self, text):
+        self.clipboard.setText(text)
+        self.status_bar.setStyleSheet("color: green;")
+        self.status_bar.showMessage(f"Copied to clipboard", 2000)
 
     def toggle_secret_visibility(self, checked):
         """Toggle password visibility"""
-        self.secret_input.setEchoMode(QLineEdit.Normal if checked else QLineEdit.Password)
+        if checked:
+            self.secret_input.setEchoMode(QLineEdit.Normal)
+            self.show_secret_btn.setIcon(QIcon(f'resources/images/invisible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
+        else:
+            self.secret_input.setEchoMode(QLineEdit.Password)
+            self.show_secret_btn.setIcon(QIcon(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
 
     def accept(self):
         """Validate and accept the dialog"""
@@ -809,7 +876,7 @@ class PasswordManagerMainWindow(QMainWindow):
         if not self.db_manager:
             return
 
-        dialog = SecretDialog(self)
+        dialog = SecretDialog(self, main_config=self.main_config)
         result = dialog.exec()
 
         if result == QDialog.Accepted:
@@ -843,7 +910,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 return
 
             # Show the edit dialog
-            dialog = SecretDialog(self, secret)
+            dialog = SecretDialog(self, secret, main_config=self.main_config)
             result = dialog.exec()
 
             if result == QDialog.Accepted:
@@ -875,14 +942,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 return
 
             # Show the secret details
-            dialog = SecretDialog(self, secret)
-            dialog.setWindowTitle("View Secret")
-            # Set all fields to read-only
-            dialog.name_input.setReadOnly(True)
-            dialog.identity_input.setReadOnly(True)
-            dialog.secret_input.setReadOnly(True)
-            dialog.url_input.setReadOnly(True)
-            dialog.notes_input.setReadOnly(True)
+            dialog = SecretDialog(self, secret, main_config=self.main_config, read_only=True)
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to view secret: {str(e)}")
@@ -954,28 +1014,36 @@ def resource_path(relative_path):
 def load_app_config(app_name):
     system = platform.system()
     if system == "Windows":
+        os_name = 'windows'
         config_dir = Path(os.getenv("LOCALAPPDATA")) / app_name  # C:\Users\Username\AppData\Roaming\YourApp
     elif system == "Linux":
+        os_name = 'linux'
         config_dir = Path.home() / ".config" / app_name  # /home/username/.config/YourApp
     elif system == "Darwin":  # macOS
+        os_name = 'macos'
         config_dir = Path.home() / "Library" / "Application Support" / app_name  # /Users/username/Library/Application Support/YourApp
     else:
         raise RuntimeError("Unsupported OS")
 
-    # Ensure the directory exists
-    config_dir.mkdir(parents=True, exist_ok=True)
+    # Create main configuration base
+    config_data = {"os_name": os_name}
+    config_data.update(OS_CONFIG[os_name])
+    # config_data = {**config_data, **OS_CONFIG[os_name]}
 
-    # Load the configuration file
-    config_path = config_dir / "config.json"
+    # Main configuration file path
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "config.json"        
+    config_data.update({"config_path": config_path.as_posix()})
+
+    # Load main configuration file if exists
     if config_path.exists():
-        # Read existing file
         with config_path.open("r", encoding="utf-8") as f:
-            config_data = json.load(f)
-    else:
-        # Create file with default content
-        config_data = {"config_path": config_path.as_posix()}
-        with config_path.open("w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=4)
+            config_data_from_file = json.load(f)
+        config_data = {**config_data_from_file, **config_data}
+
+    # Save complete base config to file
+    with config_path.open("w", encoding="utf-8") as f:
+        json.dump(config_data, f, indent=4)
 
     return config_data
 
@@ -998,9 +1066,15 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 
+    # Check the background color to determine dark mode
+    palette = app.palette()
+    main_config["theme"] = 'light'
+    if palette.color(QPalette.Window).value() < 128:  # Value < 128 means a dark background
+        main_config["theme"] = 'dark'
+
     # Set application icon and name
     app.setApplicationName(APP_NAME)
-    app_icon = QIcon(resource_path("resources/images/favicon.icns")) #TODO Make OS-specific
+    app_icon = QIcon(resource_path(f'resources/images/favicon{main_config["icon_ext"]}'))
     app.setWindowIcon(app_icon)
 
     # Create and show the main window
