@@ -14,7 +14,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
@@ -468,6 +468,16 @@ class PasswordManagerMainWindow(QMainWindow):
         self.main_config = main_config
         self.setup_ui()
 
+    def showEvent(self, event):
+        # This method is called whenever the window is shown
+        super().showEvent(event)
+
+        # Only show login dialog if not already logged in
+        if not self.db_manager:
+            # Give the main window time to display before showing the login dialog
+            # Using single shot timer ensures main window is fully rendered
+            QTimer.singleShot(100, self.show_login_dialog)
+
     def setup_ui(self):
         """Set up the main window UI"""
         self.setWindowTitle("Secure Password Manager")
@@ -487,13 +497,13 @@ class PasswordManagerMainWindow(QMainWindow):
         self.delete_button.clicked.connect(self.delete_secret)
         search_label = QLabel("Search:")
         self.search_input = QLineEdit()
-        self.search_input.textChanged.connect(self.search_secrets)        
+        self.search_input.textChanged.connect(self.search_secrets)
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.edit_button)
         button_layout.addWidget(self.delete_button)
         button_layout.addStretch()
         button_layout.addWidget(search_label)
-        button_layout.addWidget(self.search_input)        
+        button_layout.addWidget(self.search_input)
 
         # Create table for secrets
         self.secrets_table = QTableWidget()
@@ -528,9 +538,6 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Create menu bar
         self.create_menu_bar()
-
-        # Show login dialog
-        self.show_login_dialog()
 
     def display_current_vault(self, db_path=""):
         if hasattr(self, "current_vault_label"):
@@ -598,7 +605,6 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.show_login_dialog()
         else:
             self.display_current_vault()
-            self.close()
 
     def new_database(self):
         """Create a new database"""
@@ -941,7 +947,7 @@ def resource_path(relative_path):
     else:
         # Running in normal Python environment
         base_path = os.path.abspath(".")
-    
+
     return os.path.join(base_path, relative_path)
 
 
