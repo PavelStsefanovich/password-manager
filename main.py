@@ -31,7 +31,7 @@ OS_CONFIG = { # Add any platform-specific config
     "linux": {
         "icon_ext": ".png"
     },
-    "mados": {
+    "macos": {
         "icon_ext": ".icns"
     }
 }
