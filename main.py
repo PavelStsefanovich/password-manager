@@ -549,7 +549,11 @@ class PasswordManagerMainWindow(QMainWindow):
         if not self.db_manager:
             # Give the main window time to display before showing the login dialog
             # Using single shot timer ensures main window is fully rendered
-            QTimer.singleShot(100, self.show_login_dialog)
+            if self.main_config.get('first_launch'):
+                _ = self.main_config.pop('first_launch')
+                QTimer.singleShot(100, self.new_database)
+            else:
+                QTimer.singleShot(100, self.show_login_dialog)
 
     def setup_ui(self):
         """Set up the main window UI"""
@@ -1032,7 +1036,7 @@ def load_app_config(app_name):
         raise RuntimeError("Unsupported OS")
 
     # Create main configuration base
-    config_data = {"os_name": os_name}
+    config_data = {"os_name": os_name, "first_launch": "true"}
     config_data.update(OS_CONFIG[os_name])
     # config_data = {**config_data, **OS_CONFIG[os_name]}
 
@@ -1046,6 +1050,7 @@ def load_app_config(app_name):
         with config_path.open("r", encoding="utf-8") as f:
             config_data_from_file = json.load(f)
         config_data = {**config_data_from_file, **config_data}
+        _ = config_data.pop('first_launch')
 
     # Save complete base config to file
     with config_path.open("w", encoding="utf-8") as f:

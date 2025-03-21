@@ -9,7 +9,7 @@ $name = "SimplePasswordManager"
 $version = "1.0"
 $venv = Join-Path $PSScriptRoot 'venv'
 $venv_activate = Join-Path $venv 'Scripts\activate'
-$installation_files = Get-ChildItem $PSScriptRoot\install.ps1, $PSScriptRoot\install.sh
+$installation_files = Get-ChildItem (Join-Path $PSScriptRoot 'install')
 $dist_path = Join-Path $PSScriptRoot "dist\$name"
 $resources_path = Join-Path $dist_path '_internal\resources'
 $metadata_file = Join-Path $dist_path 'metadata.config'
@@ -43,7 +43,7 @@ if ( $LASTEXITCODE -ne 0 ) { throw "Build failed!" }
 
 # bundle up
 Copy-Item $resources_path $dist_path -Recurse -Force
-Copy-Item $installation_files $dist_path -Recurse -Force
+Copy-Item $installation_files.FullName $dist_path -Recurse -Force
 "name=$name" | Out-File $metadata_file -Encoding utf8 -Force
 "version=$version" | Out-File $metadata_file -Encoding utf8 -Force -Append
 

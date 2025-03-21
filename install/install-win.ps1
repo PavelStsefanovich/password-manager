@@ -113,6 +113,7 @@ $link_path = Join-Path $env:USERPROFILE "Start Menu\Programs\$product_name`.lnk"
 $objShell = New-Object -ComObject ("WScript.Shell")
 $objShortCut = $objShell.CreateShortcut($link_path)
 $objShortCut.TargetPath = $executable_path
+$objShortCut.WorkingDirectory = $PSScriptRoot
 $objShortCut.Save()
 
 newline
