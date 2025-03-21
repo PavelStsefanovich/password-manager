@@ -34,8 +34,8 @@ $product_name = (sls $metadata_file -Pattern '^name=(\w+)$').Matches.Groups[1].V
 info "Uninstalling..."
 $link_path = Join-Path $env:USERPROFILE "Start Menu\Programs\$product_name`.lnk"
 Remove-Item $link_path -Force -ErrorAction SilentlyContinue
-$config_path = Join-Path $env:USERPROFILE "AppData\Local\$product_name\config.json"
-Remove-Item $link_path -Force -ErrorAction SilentlyContinue
+$config_path = Join-Path $env:USERPROFILE "AppData\Local\$product_name"
+Remove-Item $config_path -Force -Recurse -ErrorAction SilentlyContinue
 
 info "Uninstall complete"
 newline

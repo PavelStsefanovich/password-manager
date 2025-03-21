@@ -23,11 +23,11 @@ Write-Host ":: Activating Virtual Environment ::" -ForegroundColor $note_color
 try { & deactivate } catch {}
 
 # activate virtual environment, create if needed
-try { & $venv_activate } catch {}
+try { & $venv_activate } catch { Remove-Item Env:\VIRTUAL_ENV }
 
-if ( $env:VIRTUAL_ENV -ne $venv ) {
+if ( ! $env:VIRTUAL_ENV ) {
     & python -m venv venv
-    & .\venv\Scripts\activate        
+    & .\venv\Scripts\activate
 }
 
 if ( $env:VIRTUAL_ENV -ne $venv ) { throw "Failed to activate virtual environment." }
