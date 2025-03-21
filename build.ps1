@@ -2,15 +2,19 @@ param (
     [switch] $package
 )
 
+$ErrorActionPreference = 'Stop'
 
 # vars
+$name = "SimplePasswordManager"
 $version = "1.0"
-$venv = Join-Path $pwd.path 'venv'
+$venv = Join-Path $PSScriptRoot 'venv'
 $venv_activate = Join-Path $venv 'Scripts\activate'
-$dist_path = Join-Path $pwd.path 'dist\SimplePasswordManager'
+$installation_files = Get-ChildItem $PSScriptRoot\install.ps1, $PSScriptRoot\install.sh
+$dist_path = Join-Path $PSScriptRoot "dist\$name"
 $resources_path = Join-Path $dist_path '_internal\resources'
-$specfile_path = Join-Path $pwd.path 'SimplePasswordManager.spec'
-$zipfile_path = Join-Path $pwd.path "SimplePasswordManager.v$version`.zip"
+$metadata_file = Join-Path $dist_path 'metadata.config'
+$specfile_path = Join-Path $PSScriptRoot "$name`.spec"
+$zipfile_path = Join-Path $PSScriptRoot "$name`.v$version`.zip"
 $note_color = "DarkCyan"
 
 Write-Host ":: Activating Virtual Environment ::" -ForegroundColor $note_color
@@ -37,10 +41,13 @@ Write-Host ":: Building Project ::" -ForegroundColor $note_color
 & pyinstaller $specfile_path
 if ( $LASTEXITCODE -ne 0 ) { throw "Build failed!" }
 
-# copy resources files
-Copy-Item $resources_path $dist_path -Recurse -Force
-
 # bundle up
+Copy-Item $resources_path $dist_path -Recurse -Force
+Copy-Item $installation_files $dist_path -Recurse -Force
+"name=$name" | Out-File $metadata_file -Encoding utf8 -Force
+"version=$version" | Out-File $metadata_file -Encoding utf8 -Force -Append
+
+# create zip package
 if ( $package ) {
     Write-Host ":: Creating Zip Package ::" -ForegroundColor $note_color
     Remove-Item $zipfile_path -Force -ErrorAction SilentlyContinue
