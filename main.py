@@ -296,7 +296,7 @@ class SecretDialog(QDialog):
         self.identity_input = QLineEdit(self.secret.identity)
         self.copy_identity_btn = QPushButton()
         self.copy_identity_btn.setToolTip("Copy to clipboard")
-        self.copy_identity_btn.setMaximumWidth(30)          
+        self.copy_identity_btn.setMaximumWidth(30)
         self.copy_identity_btn.setIcon(QIcon.fromTheme("edit-copy"))
         self.copy_identity_btn.clicked.connect(lambda checked=False, field=self.identity_input: self.copy_to_clipboard(field.text()))
 
@@ -308,13 +308,13 @@ class SecretDialog(QDialog):
         self.secret_input.setEchoMode(QLineEdit.Password)
         self.show_secret_btn = QPushButton()
         self.show_secret_btn.setToolTip("Show secret value")
-        self.show_secret_btn.setMaximumWidth(30)          
-        self.show_secret_btn.setIcon(QIcon(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
+        self.show_secret_btn.setMaximumWidth(30)
+        self.show_secret_btn.setIcon(QIcon(resource_path(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}')))
         self.show_secret_btn.setCheckable(True)
         self.show_secret_btn.toggled.connect(self.toggle_secret_visibility)
         self.copy_secret_btn = QPushButton()
         self.copy_secret_btn.setToolTip("Copy to clipboard")
-        self.copy_secret_btn.setMaximumWidth(30)          
+        self.copy_secret_btn.setMaximumWidth(30)
         self.copy_secret_btn.setIcon(QIcon.fromTheme("edit-copy"))
         self.copy_secret_btn.clicked.connect(lambda checked=False, field=self.secret_input: self.copy_to_clipboard(field.text()))
 
@@ -326,13 +326,13 @@ class SecretDialog(QDialog):
         self.url_input = QLineEdit(self.secret.url)
         self.copy_url_btn = QPushButton()
         self.copy_url_btn.setToolTip("Copy to clipboard")
-        self.copy_url_btn.setMaximumWidth(30)          
+        self.copy_url_btn.setMaximumWidth(30)
         self.copy_url_btn.setIcon(QIcon.fromTheme("edit-copy"))
         self.copy_url_btn.clicked.connect(lambda checked=False, field=self.url_input: self.copy_to_clipboard(field.text()))
 
         url_layout = QHBoxLayout()
         url_layout.addWidget(self.url_input)
-        url_layout.addWidget(self.copy_url_btn)        
+        url_layout.addWidget(self.copy_url_btn)
 
         self.notes_input = QTextEdit()
         self.notes_input.setText(self.secret.notes)
@@ -360,7 +360,7 @@ class SecretDialog(QDialog):
             self.url_input.setReadOnly(True)
             self.notes_input.setReadOnly(True)
         else:
-            self.setWindowTitle("Add Secret" if not self.secret.id else "Edit Secret")  
+            self.setWindowTitle("Add Secret" if not self.secret.id else "Edit Secret")
 
         self.status_bar = QStatusBar()
         main_layout.addStretch()
@@ -383,10 +383,10 @@ class SecretDialog(QDialog):
         """Toggle password visibility"""
         if checked:
             self.secret_input.setEchoMode(QLineEdit.Normal)
-            self.show_secret_btn.setIcon(QIcon(f'resources/images/invisible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
+            self.show_secret_btn.setIcon(QIcon(resource_path(f'resources/images/invisible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}')))
         else:
             self.secret_input.setEchoMode(QLineEdit.Password)
-            self.show_secret_btn.setIcon(QIcon(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}'))
+            self.show_secret_btn.setIcon(QIcon(resource_path(f'resources/images/visible-16-{self.main_config["theme"]}{self.main_config["icon_ext"]}')))
 
     def accept(self):
         """Validate and accept the dialog"""
@@ -1042,7 +1042,7 @@ def load_app_config(app_name):
 
     # Main configuration file path
     config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / "config.json"        
+    config_path = config_dir / "config.json"
     config_data.update({"config_path": config_path.as_posix()})
 
     # Load main configuration file if exists
