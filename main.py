@@ -659,10 +659,13 @@ class PasswordManagerMainWindow(QMainWindow):
         button_layout = QHBoxLayout()
         self.add_button = QPushButton("Add Secret")
         self.add_button.clicked.connect(self.add_secret)
+        self.add_button.setEnabled(False)
         self.edit_button = QPushButton("Edit Secret")
         self.edit_button.clicked.connect(self.edit_secret)
+        self.edit_button.setEnabled(False)
         self.delete_button = QPushButton("Delete Secret")
         self.delete_button.clicked.connect(self.delete_secret)
+        self.delete_button.setEnabled(False)
         search_label = QLabel("Search:")
         self.search_input = QLineEdit()
         self.search_input.textChanged.connect(self.search_secrets)
@@ -772,13 +775,15 @@ class PasswordManagerMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        change_password_action = QAction("Change Master Password", self)
-        change_password_action.triggered.connect(self.change_master_password)
-        file_menu.addAction(change_password_action)
+        self.change_password_action = QAction("Change Master Password", self)
+        self.change_password_action.triggered.connect(self.change_master_password)
+        self.change_password_action.setEnabled(False)
+        file_menu.addAction(self.change_password_action)
 
-        delete_action = QAction("Delete Vault", self)
-        delete_action.triggered.connect(self.delete_database)
-        file_menu.addAction(delete_action)
+        self.delete_action = QAction("Delete Vault", self)
+        self.delete_action.triggered.connect(self.delete_database)
+        self.delete_action.setEnabled(False)
+        file_menu.addAction(self.delete_action)
 
         file_menu.addSeparator()
 
@@ -1002,6 +1007,14 @@ class PasswordManagerMainWindow(QMainWindow):
             self.secrets_table.horizontalHeader().setSortIndicator(sort_column, sort_order)
 
             self.status_bar.showMessage(f"Displaying {len(secrets)} secret(s)", 2000)
+
+            # Enable vault-related buttions
+            self.add_button.setEnabled(True)
+            self.edit_button.setEnabled(True)
+            self.delete_button.setEnabled(True)
+            self.delete_action.setEnabled(True)
+            self.change_password_action.setEnabled(True)
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load secrets: {str(e)}")
 
