@@ -684,6 +684,7 @@ class PasswordManagerMainWindow(QMainWindow):
         self.secrets_table.setColumnCount(4)
         self.secrets_table.setHorizontalHeaderLabels(["Name", "Identity", "URL", "Last Updated"])
         self.secrets_table.verticalHeader().hide() # do not show row numbers
+        self.secrets_table.horizontalHeader().setVisible(False) # do not show column names
 
         # Change from setSectionResizeMode to setResizeMode to allow manual column resizing
         self.secrets_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -965,6 +966,7 @@ class PasswordManagerMainWindow(QMainWindow):
             self.secrets_table.setSortingEnabled(False)
             self.secrets_table.clearContents()
             self.secrets_table.setRowCount(0)
+            self.secrets_table.horizontalHeader().setVisible(False) # Hide column names
             return
 
         # Store current sorting
@@ -1016,6 +1018,8 @@ class PasswordManagerMainWindow(QMainWindow):
             self.secrets_table.setSortingEnabled(True)
             self.secrets_table.horizontalHeader().setSortIndicator(sort_column, sort_order)
 
+            # Show column names
+            self.secrets_table.horizontalHeader().setVisible(True)
             self.status_bar.showMessage(f"Displaying {len(secrets)} secret(s)", 2000)
 
             # Enable vault-related buttions
