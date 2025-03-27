@@ -15,8 +15,8 @@ from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
-from PySide6.QtCore import  Qt, QTimer, Signal, QObject, QEvent
-from PySide6.QtGui import QAction, QIcon, QPalette
+from PySide6.QtCore import  Qt, QTimer, Signal, QObject, QEvent, QUrl
+from PySide6.QtGui import QAction, QIcon, QPalette, QDesktopServices
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
                              QMessageBox, QDialog, QTextEdit, QHeaderView, QFormLayout,
@@ -775,6 +775,10 @@ class PasswordManagerMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        self.config_action = QAction("Open Config", self)
+        self.config_action.triggered.connect(self.open_config)
+        file_menu.addAction(self.config_action)
+
         self.change_password_action = QAction("Change Master Password", self)
         self.change_password_action.triggered.connect(self.change_master_password)
         self.change_password_action.setEnabled(False)
@@ -855,6 +859,9 @@ class PasswordManagerMainWindow(QMainWindow):
         self.main_config = {**self.main_config, **merge_dict}
         with Path(self.main_config["config_path"]).open("w") as f:
             json.dump(self.main_config, f, indent=4)
+
+    def open_config(self):
+        QDesktopServices.openUrl(QUrl.fromLocalFile(self.main_config["config_path"]))
 
     def change_master_password(self):
         """Change the master password"""
