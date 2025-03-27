@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import time
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -14,7 +15,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import  Qt, QTimer, Signal, QObject, QEvent
 from PySide6.QtGui import QAction, QIcon, QPalette
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
@@ -531,6 +532,95 @@ class SortableTableWidgetItem(QTableWidgetItem):
         return super().__lt__(other)
 
 
+class ActivityMonitor(QObject):
+    """Monitors user activity and emits a signal when user is inactive for too long."""
+
+    inactivity_detected = Signal()
+    warning_threshold_reached = Signal()
+
+    def __init__(self, timeout_seconds=300, warning_seconds=60): # defaults: 5 minutes with 1 minute warning
+        """Initialize the activity monitor."""
+        super().__init__()
+        self.timeout_seconds = timeout_seconds
+        self.warning_seconds = warning_seconds
+        self.last_activity_time = time.time()
+        self.remaining = 0
+
+        # Create timer to check for inactivity
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.check_activity)
+        self.timer.start(1000)  # Check every second
+
+    def register_activity(self):
+        """Update the last activity timestamp and reset warning flag."""
+        self.last_activity_time = time.time()
+
+    def check_activity(self):
+        """Check if user has been inactive for warning or logout thresholds."""
+        current_time = time.time()
+        elapsed = current_time - self.last_activity_time
+        self.remaining = max(round(self.timeout_seconds) - round(elapsed), 0)
+
+        # Show warning that app is about to close
+        warning_threshold = self.timeout_seconds - self.warning_seconds
+        if elapsed >= warning_threshold:
+            self.warning_threshold_reached.emit()
+            # self.warning_shown = True
+
+        # Close the app due to inactivity
+        if elapsed >= self.timeout_seconds:
+            self.inactivity_detected.emit()
+
+
+class InactivityWarningDialog(QDialog):
+    """Modal dialog that warns the user about impending logout."""
+
+    def __init__(self, parent=None, remaining_seconds=60):
+        super().__init__(parent)
+
+        # Make dialog modal - user can't interact with other widgets
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowTitle("Warning")
+        self.setWindowIcon(QIcon.fromTheme("dialog-warning"))
+        self.setMinimumWidth(350)
+
+        # Ensure the dialog stays on top
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+
+        # Create layout
+        layout = QVBoxLayout(self)
+
+        # Warning message
+        layout.addWidget(QLabel(f"{APP_NAME} has been inactive for a while."))
+
+        # Timer display
+        self.timer_label = QLabel(f"The app will close in {remaining_seconds} seconds.")
+        layout.addWidget(self.timer_label)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        self.continue_button = QPushButton("Keep Open")
+        self.continue_button.clicked.connect(self.accept)  # Will return QDialog.Accepted
+        button_layout.addWidget(self.continue_button)
+        layout.addLayout(button_layout)
+
+        # Timer to update countdown
+        self.remaining_seconds = remaining_seconds
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_countdown)
+        self.timer.start(1000)  # Update every second
+
+    def update_countdown(self):
+        """Update the countdown timer and close dialog if time runs out."""
+        self.remaining_seconds -= 1
+
+        if self.remaining_seconds <= 0:
+            self.timer.stop()
+            self.reject()  # Close with reject result (same as clicking Close)
+        else:
+            self.timer_label.setText(f"The app will close in {self.remaining_seconds} seconds.")
+
+
 class PasswordManagerMainWindow(QMainWindow):
     """Main window for the Password Manager application"""
 
@@ -539,6 +629,7 @@ class PasswordManagerMainWindow(QMainWindow):
         self.db_manager = None
         self.current_search = ""
         self.main_config = main_config
+        self.setup_activity_monitor(main_config)
         self.setup_ui()
 
     def showEvent(self, event):
@@ -615,6 +706,42 @@ class PasswordManagerMainWindow(QMainWindow):
 
         # Create menu bar
         self.create_menu_bar()
+
+    def setup_activity_monitor(self, main_config):
+        # Setup activity monitor (default: 5 minutes = 300 seconds, warning at 1 minute = 60 seconds)
+        timeout_seconds = 300 if not main_config.get('timeout_seconds') else int(main_config.get('timeout_seconds'))
+        warning_seconds = 60 if not main_config.get('warning_seconds') else int(main_config.get('warning_seconds'))
+        self.update_main_config({'timeout_seconds': timeout_seconds, 'warning_seconds': warning_seconds})
+        self.activity_monitor = ActivityMonitor(timeout_seconds=timeout_seconds, warning_seconds=warning_seconds)
+        self.activity_monitor.warning_threshold_reached.connect(self.show_warning)
+        self.activity_monitor.inactivity_detected.connect(self.close)
+
+        # Install QApp event filter to monitor user activity
+        QApplication.instance().installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        """Filter events to detect user activity."""
+        if (event.type() in (
+            QEvent.MouseButtonPress, QEvent.MouseButtonRelease,
+            QEvent.KeyPress, QEvent.KeyRelease, QEvent.FocusIn,
+            QEvent.Wheel, QEvent.TouchBegin, QEvent.TouchUpdate, QEvent.TouchEnd
+            # QEvent.MouseMove, QEvent.FocusOut,
+        )):
+            self.activity_monitor.register_activity()
+        return super().eventFilter(obj, event)
+        # return False
+
+    def show_warning(self):
+        """Show warning dialog before logout."""
+        warning_dialog = InactivityWarningDialog(self, remaining_seconds=self.activity_monitor.warning_seconds)
+        result = warning_dialog.exec()
+
+        if result == QDialog.Accepted:
+            # User clicked "Continue" - reset activity timer
+            self.activity_monitor.register_activity()
+        else:
+            # User clicked "Close" or timeout occurred - close application
+            self.close()
 
     def display_current_vault(self, db_path=""):
         if hasattr(self, "current_vault_label"):
@@ -790,6 +917,7 @@ class PasswordManagerMainWindow(QMainWindow):
             return
 
         try:
+            # Change color to warn user about dangerous operation
             self.status_bar.setStyleSheet("color: darkorange;")
             db_path = self.db_manager.db_path
 
