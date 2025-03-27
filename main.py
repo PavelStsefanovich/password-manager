@@ -25,6 +25,9 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
 
 
 APP_NAME = "SimplePasswordManager"
+APP_DISPLAY_NAME = "Simple Password Manager"
+APP_VERSION = "1.0"
+HOME_PAGE = "https://github.com/PavelStsefanovich/password-manager"
 OS_CONFIG = { # Add any platform-specific config
     "windows": {
         "icon_ext": ".ico"
@@ -1140,15 +1143,11 @@ class PasswordManagerMainWindow(QMainWindow):
     def show_about(self):
         """Show the about dialog"""
         QMessageBox.about(
-            self, "About Secure Password Manager",
-            "Secure Password Manager\n\n"
-            "A simple and secure password manager application.\n"
-            "Features:\n"
-            "- Encrypted database\n"
-            "- Master password protection\n"
-            "- Secure storage of passwords and other sensitive information\n"
-            "- Search functionality\n\n"
-            "Created with Python, SQLite and PySide6"
+            self, f"About {APP_DISPLAY_NAME}",
+            f"{APP_DISPLAY_NAME}\n"
+            f"Version: {APP_VERSION}\n\n"
+            f"Homepage:\n"
+            f"{HOME_PAGE}"
         )
 
     def closeEvent(self, event):
