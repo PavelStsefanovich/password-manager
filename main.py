@@ -23,11 +23,13 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QGroupBox, QDialogButtonBox, QInputDialog, QFileDialog, QStatusBar)
 
 
-
+# This block is referenced by build scripts using RegEx.
+# Please preserve the formatting to avoid failures in build scripts.
 APP_NAME = "SimplePasswordManager"
 APP_DISPLAY_NAME = "Simple Password Manager"
 APP_VERSION = "1.0"
 HOME_PAGE = "https://github.com/PavelStsefanovich/password-manager"
+
 OS_CONFIG = { # Add any platform-specific config
     "windows": {
         "icon_ext": ".ico"

@@ -6,8 +6,9 @@ param (
 $ErrorActionPreference = 'Stop'
 
 # vars
-$name = "SimplePasswordManager"
-$version = "1.0"
+$main_python_script = Join-Path $PSScriptRoot 'main.py'
+$name = ((Get-Content $main_python_script | Select-String -Pattern 'APP_NAME\s=\s\"([^"]+)\"\s*$').Matches.Groups[1].Value).Trim()
+$version = ((Get-Content $main_python_script | Select-String -Pattern 'APP_VERSION\s=\s\"([^"]+)\"\s*$').Matches.Groups[1].Value).Trim()
 $venv = Join-Path $PSScriptRoot 'venv'
 $venv_activate = Join-Path $venv 'Scripts\activate.ps1'
 $installation_files = Get-ChildItem (Join-Path $PSScriptRoot 'install')
@@ -16,6 +17,9 @@ $metadata_file = Join-Path $dist_path 'metadata.config'
 $specfile_path = Join-Path $PSScriptRoot "$name`.spec"
 $zipfile_path = Join-Path $PSScriptRoot "$name`.v$version`.zip"
 $note_color = "DarkCyan"
+
+Write-Host ":: Building app `"$name`", version `"$version`" ::"
+Start-Sleep 1
 
 Write-Host ":: Activating Virtual Environment ::" -ForegroundColor $note_color
 try { deactivate } catch {}
