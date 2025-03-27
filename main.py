@@ -677,6 +677,7 @@ class PasswordManagerMainWindow(QMainWindow):
         self.secrets_table = QTableWidget()
         self.secrets_table.setColumnCount(4)
         self.secrets_table.setHorizontalHeaderLabels(["Name", "Identity", "URL", "Last Updated"])
+        self.secrets_table.verticalHeader().hide() # do not show row numbers
 
         # Change from setSectionResizeMode to setResizeMode to allow manual column resizing
         self.secrets_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -743,7 +744,7 @@ class PasswordManagerMainWindow(QMainWindow):
             # User clicked "Close" or timeout occurred - close application
             self.close()
 
-    def display_current_vault(self, db_path=""):
+    def show_current_vault(self, db_path=""):
         if hasattr(self, "current_vault_label"):
             self.status_bar.removeWidget(self.current_vault_label)
             self.current_vault_label.deleteLater()
@@ -802,13 +803,13 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.display_current_vault(dialog.db_path)
+                self.show_current_vault(dialog.db_path)
                 self.status_bar.showMessage(f"Vault opened successfully", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to open vault: {str(e)}")
                 self.show_login_dialog()
         else:
-            self.display_current_vault()
+            self.show_current_vault()
 
     def new_database(self):
         """Create a new database"""
@@ -822,7 +823,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.display_current_vault(dialog.db_path)
+                self.show_current_vault(dialog.db_path)
                 self.status_bar.showMessage(f"New vault created successfully", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to create vault: {str(e)}")
@@ -839,7 +840,7 @@ class PasswordManagerMainWindow(QMainWindow):
                 self.db_manager = DatabaseManager(dialog.db_path, dialog.password)
                 self.update_main_config(merge_dict={"db_path": dialog.db_path})
                 self.refresh_secrets_table()
-                self.display_current_vault(dialog.db_path)
+                self.show_current_vault(dialog.db_path)
                 self.status_bar.showMessage(f"Vault opened successfully", 6000)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to open vault: {str(e)}")
@@ -853,7 +854,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def change_master_password(self):
         """Change the master password"""
         if not self.db_manager:
-            self.display_current_vault()
+            self.show_current_vault()
             self.status_bar.setStyleSheet("color: darkorange;")
             self.status_bar.showMessage(f"Please open a vault first", 6000)
             return
@@ -911,7 +912,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
     def delete_database(self):
         if not self.db_manager:
-            self.display_current_vault()
+            self.show_current_vault()
             self.status_bar.setStyleSheet("color: darkorange;")
             self.status_bar.showMessage(f"Please open a vauflt first", 6000)
             return
@@ -929,7 +930,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
             if not ok or confirm_delete != 'DELETE':
                 QMessageBox.warning(self, "The vault was not deleted", "User confirmation failed")
-                self.display_current_vault(db_path)
+                self.show_current_vault(db_path)
                 return
 
             self.db_manager.close()
@@ -939,7 +940,7 @@ class PasswordManagerMainWindow(QMainWindow):
             self.refresh_secrets_table()
 
             QMessageBox.information(self, "Success", "Vault deleted")
-            self.display_current_vault()
+            self.show_current_vault()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to delete vault: {str(e)}")
 
