@@ -18,7 +18,7 @@ $specfile_path = Join-Path $PSScriptRoot "$name`.spec"
 $zipfile_path = Join-Path $PSScriptRoot "$name`.v$version`.zip"
 $note_color = "DarkCyan"
 
-Write-Host ":: Building app `"$name`", version `"$version`" ::"
+Write-Host ":: Building app `"$name`", version `"$version`" ::" -ForegroundColor $note_color
 Start-Sleep 1
 
 Write-Host ":: Activating Virtual Environment ::" -ForegroundColor $note_color
