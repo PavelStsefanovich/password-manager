@@ -1,4 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Bash-specific shell options
+shopt -s nullglob  # Allow null globs
+set -o pipefail   # Catch failures in piped commands
+set -e            # Exit immediately on error
+set -u            # Treat unset variables as an error
 
 # ANSI Color Codes
 DARKCYAN='\033[0;36m'
@@ -7,26 +13,23 @@ NC='\033[0m' # No Color
 
 # Function to print colored info message
 info_message() {
-    echo -e "${DARKCYAN}$1${NC}"
+    printf "${DARKCYAN}%s${NC}\n" "$1"
 }
 
 # Function to print colored error and exit
 error_exit() {
-    echo -e "${RED}Error: $1${NC}" >&2
+    printf "${RED}Error: %s${NC}\n" "$1" >&2
     exit 1
 }
 
-# Set error handling
-set -e
-
-# Get the directory of the script
+# Get the directory of the script (Bash-specific method)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Change to the script's directory
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR" || error_exit "Unable to change to script directory"
 
 # Deactivate any active virtual environment
-if [ -n "$VIRTUAL_ENV" ]; then
+if [[ -n "${VIRTUAL_ENV:-}" ]]; then
     info_message "Deactivating current virtual environment..."
     deactivate
 fi
@@ -35,8 +38,9 @@ fi
 VENV_PATH=".venv"
 
 # Attempt to activate existing virtual environment
-if [ -d "$VENV_PATH" ]; then
+if [[ -d "$VENV_PATH" ]]; then
     info_message "Attempting to activate existing virtual environment..."
+    # shellcheck source=/dev/null
     source "$VENV_PATH/bin/activate" || error_exit "Failed to activate existing virtual environment"
 else
     # Create new virtual environment
@@ -44,6 +48,7 @@ else
     python3 -m venv "$VENV_PATH" || error_exit "Failed to create virtual environment"
     
     # Activate the new virtual environment
+    # shellcheck source=/dev/null
     source "$VENV_PATH/bin/activate" || error_exit "Failed to activate new virtual environment"
     
     # Install dependencies
