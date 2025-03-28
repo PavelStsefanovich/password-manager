@@ -114,6 +114,7 @@ mkdir -p "$DIST_DIR" || error_exit "Failed to create distribution directory"
 # Copy install files to distribution directory
 info_message "Copying install files..."
 cp -R install/macos-* "$DIST_DIR/" || error_exit "Failed to copy install files"
+cp README.md "$DIST_DIR/" || error_exit "Failed to copy install files"
 
 # Copy .app directory to distribution directory
 info_message "Copying application bundle..."
