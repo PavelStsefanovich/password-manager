@@ -31,25 +31,28 @@ cd "$SCRIPT_DIR" || error_exit "Unable to change to script directory"
 # Retrieve Application Bundle path
 APP_BUNDLE_PATH=$(find "$SCRIPT_DIR" -maxdepth 1 -type d -name "*.app")
 APP_BUNDLE_NAME=$(echo "${APP_BUNDLE_PATH}"| xargs -I {} basename "{}")
+APP_BASE_NAME=${APP_BUNDLE_NAME%%.*}
 DEST_PATH="/Applications/${APP_BUNDLE_NAME}"
+CONFIG_DIR="${HOME}/Library/Application Support/${APP_BASE_NAME}"
 
 # Move Application bundle to Applications directory
 if [ ! -e "${APP_BUNDLE_PATH}" ]; then
-    error_exit "Canot find application bundle in directory '${SCRIPT_DIR}'"
+    error_exit "Canot find application bundle placeholder in directory '${SCRIPT_DIR}'"
 fi
 
-info_message "Moving ${APP_BUNDLE_NAME} to Applications folder (sudo password required)..."
+info_message "Deleting ${APP_BUNDLE_NAME} from Applications folder (sudo password required)..."
 if [ -d "$DEST_PATH" ]; then
     sudo rm -rf "$DEST_PATH"
 fi
 
-sudo mv "$APP_BUNDLE_PATH" "$DEST_PATH"
+# Cleaning up
+if [ -d "$CONFIG_DIR" ]; then
+    sudo rm -rf "$CONFIG_DIR"
+fi
 
 # Check if the move was successful
 if [ $? -eq 0 ]; then
-    info_message "${APP_BUNDLE_NAME} has been successfully moved to the Applications folder."
-    # Create placeholder app bundle directory for use with uninstall script
-    mkdir -p "$APP_BUNDLE_PATH"
+    info_message "${APP_BUNDLE_NAME} has been successfully deleted from the Applications folder."
 else
-    error_exit "Error: Failed to move ${APP_BUNDLE_NAME} to the Applications folder."
+    error_exit "Error: Failed to delete ${APP_BUNDLE_NAME} from the Applications folder."
 fi
