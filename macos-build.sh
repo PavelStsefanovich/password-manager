@@ -104,8 +104,15 @@ else
 fi
 
 # Build the application
+info_message "Parsing build.spec file..."
+BUILD_SPEC_FILE="${SCRIPT_DIR}/macos-build.spec"
+BUILD_SPEC_FILE_TEMP="${SCRIPT_DIR}/build.spec"
+awk -v app_name="$APP_NAME" '{gsub(/<APP_NAME>/, app_name)}1' "${BUILD_SPEC_FILE}" > "${BUILD_SPEC_FILE_TEMP}"
+
 info_message "Building application with PyInstaller..."
-pyinstaller macos-build.spec || error_exit "PyInstaller build failed"
+pyinstaller "${BUILD_SPEC_FILE_TEMP}" || error_exit "PyInstaller build failed"
+
+rm "${BUILD_SPEC_FILE_TEMP}"
 
 # Create versioned distribution directory
 info_message "Creating distribution directory..."

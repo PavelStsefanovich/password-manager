@@ -16,3 +16,4 @@ dist
 .DS_Store
 test*.py
 *.zip
+!macos-build.spec

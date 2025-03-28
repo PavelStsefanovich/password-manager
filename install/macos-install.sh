@@ -43,13 +43,11 @@ if [ -d "$DEST_PATH" ]; then
     sudo rm -rf "$DEST_PATH"
 fi
 
-sudo mv "$APP_BUNDLE_PATH" "$DEST_PATH"
+sudo cp -R "$APP_BUNDLE_PATH" "$DEST_PATH"
 
 # Check if the move was successful
 if [ $? -eq 0 ]; then
     info_message "${APP_BUNDLE_NAME} has been successfully moved to the Applications folder."
-    # Create placeholder app bundle directory for use with uninstall script
-    mkdir -p "$APP_BUNDLE_PATH"
 else
     error_exit "Error: Failed to move ${APP_BUNDLE_NAME} to the Applications folder."
 fi
