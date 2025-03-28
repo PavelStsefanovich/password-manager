@@ -71,7 +71,7 @@ if [[ -d "$DIST_DIR" ]]; then
 fi
 
 if [[ -f "$ZIP_FILE" ]]; then
-    info_message "Removing existing existing zip file..."
+    info_message "Removing existing zip file..."
     rm -rf "$ZIP_FILE"
 fi
 

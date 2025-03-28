@@ -1,4 +1,5 @@
 venv
+.venv
 __pycache__
 *.pyc
 *.pyo
@@ -17,3 +18,5 @@ dist
 test*.py
 *.zip
 !macos-build.spec
+!linux-build.spec
+!win-build.spec
