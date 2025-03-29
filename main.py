@@ -695,8 +695,8 @@ class PasswordManagerMainWindow(QMainWindow):
         self.secrets_table.horizontalHeader().setStretchLastSection(True)
 
         self.secrets_table.setColumnWidth(0, 200)
-        self.secrets_table.setColumnWidth(1, 150)
-        self.secrets_table.setColumnWidth(2, 150)
+        self.secrets_table.setColumnWidth(1, 200)
+        self.secrets_table.setColumnWidth(2, 250)
         self.secrets_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.secrets_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.secrets_table.doubleClicked.connect(self.view_secret)
