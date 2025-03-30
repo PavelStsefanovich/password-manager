@@ -16,7 +16,7 @@ cd <project_root>
 # run build script
 .\win-build.ps1
 # run installation script (update path as needed)
-.\dist\SimplePasswordManager.vX.X\win-install.ps1
+.\dist\SimplePasswordManager\win-install.ps1
 ```
 
 ### MacOS
@@ -26,7 +26,7 @@ cd <project_root>
 # run build script
 bash macos-build.sh
 # run installation script (update path as needed)
-bash dist/SimplePasswordManager.vX.X/macos-install.sh
+bash dist/package/SimplePasswordManager/macos-install.sh
 ```
 
 ### Linux
@@ -36,7 +36,7 @@ cd <project_root>
 # run build script
 bash linux-build.sh
 # run installation script (update path as needed)
-bash dist/SimplePasswordManager.vX.X/linux-install.sh
+bash dist/SimplePasswordManager/linux-install.sh
 ```
 > NOTE: Linux flows (build/install/uninstall/runtime) have not been tested.
 
@@ -49,7 +49,7 @@ If you prefer to use pre-built package, please follow these steps:
 2. Extract files from zip package:
    + On Windows: extraction directory will be used as installation directory.
    + On MacOS: extraction directory is temporary, files can be extracted anywhere
-   + On Linux: you guys have your own ways, so do what you want
+   + On Linux: you guys usually have your own ways, so do what you want
 
 3. Run installation script inside the extraction directory
    ```powershell
@@ -72,6 +72,18 @@ If you prefer to use pre-built package, please follow these steps:
 - If you did not immediately create the vault, you can do it later from the `File` menu.
 - You can choose location for your vault that is monitored by the cloud storage clent, such as Google Drive or OneDrive to have it synced across your devices (you will need to install the Password Manager app on each of your devices).
 - You can create more than one vault and switch between them. The vault that you used the last will be selected next time that you open the app.
+
+## Upgrade
+Upgrade process is pretty sraight forward:
+
+### Windows
+1. Download new pre-build package or re-build from source with *-package* option to create a zip file (dont forget to run `git pull` first).
+2. Extract the zip package into the exiting installation directory and choose to overwrite with new files (if you instaled directly from `dist` directory, you dont even need to package new zip, just rebuild).
+3. You should be good to go. There is no need to run install script, unless you change the installation directory.
+
+### MacOS
+1. Download pre-built package, or re-build from source (dont forget to run `git pull` first)
+2. Run `bash macos-install.sh` script, or just manually move SimplePasswordManager.app into /Applications directory.
 
 # Lastly
 If you experience any issues, I will be happy to hear about them, but please dont expect me to fix them immediately, as I do not actively maintain this project. You have the source, feel free to tune it to your needs.
