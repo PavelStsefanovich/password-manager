@@ -11,19 +11,6 @@ DARKCYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Flag for packaging
-PACKAGE_FLAG=false
-
-# Extract version from main.py
-APP_NAME=$(grep 'APP_NAME' main.py | head -n1 | sed -E 's/.*APP_NAME = "([^"]+)".*/\1/')
-VERSION=$(grep 'APP_VERSION' main.py | head -n1 | sed -E 's/.*APP_VERSION = "([^"]+)".*/\1/')
-
-# Validate version extraction
-if [[ -z "$VERSION" ]]; then
-    printf "${RED}Error: Could not extract version from main.py${NC}\n" >&2
-    exit 1
-fi
-
 # Function to print usage information
 usage() {
     echo "Usage: $0 [-p] "
@@ -32,6 +19,7 @@ usage() {
 }
 
 # Parse command-line arguments
+PACKAGE_FLAG=false
 while getopts ":p" opt; do
     case ${opt} in
         p )
@@ -55,19 +43,35 @@ error_exit() {
     exit 1
 }
 
-# Get the directory of the script (Bash-specific method)
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Change to the script's directory
+
+# Vars
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" || error_exit "Unable to change to script directory"
 
-# Remove distribution directory and zipfile if exist from prevous build
-DIST_DIR="dist/${APP_NAME}.v${VERSION}"
-ZIP_FILE="dist/${APP_NAME}.v${VERSION}.zip"
+# Extract version from main.py
+APP_NAME=$(grep 'APP_NAME' main.py | head -n1 | sed -E 's/.*APP_NAME = "([^"]+)".*/\1/')
+VERSION=$(grep 'APP_VERSION' main.py | head -n1 | sed -E 's/.*APP_VERSION = "([^"]+)".*/\1/')
 
-if [[ -d "$DIST_DIR" ]]; then
+# Validate version extraction
+if [[ -z "$VERSION" ]]; then
+    error_exit "${RED}Error: Could not extract version from main.py${NC}\n" >&2
+fi
+
+PACKAGE_DIR="dist/package/${APP_NAME}"
+ZIP_FILE="dist/package/${APP_NAME}.zip"
+METADATA_FILE="$PACKAGE_DIR/install.config"
+BUILD_SPEC_FILE="${SCRIPT_DIR}/macos-build.spec"
+BUILD_SPEC_FILE_TEMP="${SCRIPT_DIR}/build.spec"
+VENV_PATH=".venv"
+
+info_message "Building app \"$APP_NAME\", version \"$VERSION\""
+sleep 2
+
+# Remove distribution directory and zipfile if exist from prevous build
+if [[ -d "$PACKAGE_DIR" ]]; then
     info_message "Removing existing distribution directory..."
-    rm -rf "$DIST_DIR"
+    rm -rf "$PACKAGE_DIR"
 fi
 
 if [[ -f "$ZIP_FILE" ]]; then
@@ -80,9 +84,6 @@ if [[ -n "${VIRTUAL_ENV:-}" ]]; then
     info_message "Deactivating current virtual environment..."
     deactivate
 fi
-
-# Check for existing virtual environment
-VENV_PATH=".venv"
 
 # Attempt to activate existing virtual environment
 if [[ -d "$VENV_PATH" ]]; then
@@ -105,8 +106,6 @@ fi
 
 # Build the application
 info_message "Parsing build.spec file..."
-BUILD_SPEC_FILE="${SCRIPT_DIR}/macos-build.spec"
-BUILD_SPEC_FILE_TEMP="${SCRIPT_DIR}/build.spec"
 awk -v app_name="$APP_NAME" '{gsub(/<APP_NAME>/, app_name)}1' "${BUILD_SPEC_FILE}" > "${BUILD_SPEC_FILE_TEMP}"
 
 info_message "Building application with PyInstaller..."
@@ -114,23 +113,25 @@ pyinstaller "${BUILD_SPEC_FILE_TEMP}" || error_exit "PyInstaller build failed"
 
 rm "${BUILD_SPEC_FILE_TEMP}"
 
-# Create versioned distribution directory
-info_message "Creating distribution directory..."
-mkdir -p "$DIST_DIR" || error_exit "Failed to create distribution directory"
+# Create versioned package directory
+info_message "Creating package directory..."
+mkdir -p "$PACKAGE_DIR" || error_exit "Failed to create package directory"
 
-# Copy install files to distribution directory
+# Copy install files to package directory
 info_message "Copying install files..."
-cp -R install/macos-* "$DIST_DIR/" || error_exit "Failed to copy install files"
-cp README.md "$DIST_DIR/" || error_exit "Failed to copy install files"
+cp -R install/macos-* "$PACKAGE_DIR/" || error_exit "Failed to copy install files"
+cp README.md "$PACKAGE_DIR/" || error_exit "Failed to copy install files"
+echo "name=$APP_NAME" > "$METADATA_FILE"
+echo "version=$VERSION" >> "$METADATA_FILE"
 
-# Copy .app directory to distribution directory
+# Copy .app directory to package directory
 info_message "Copying application bundle..."
-cp -R "dist/${APP_NAME}.app" "$DIST_DIR/" || error_exit "Failed to copy application bundle"
+cp -R "dist/${APP_NAME}.app" "$PACKAGE_DIR/" || error_exit "Failed to copy application bundle"
 
 # Optional packaging
 if [[ "$PACKAGE_FLAG" = true ]]; then
     info_message "Creating zip archive..."
-    (zip -r "${ZIP_FILE}" "${DIST_DIR}") || \
+    (zip -r "${ZIP_FILE}" "${PACKAGE_DIR}") || \
         error_exit "Failed to create zip archive"
     info_message "Zip archive created: ${ZIP_FILE}"
 fi

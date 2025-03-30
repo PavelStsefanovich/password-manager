@@ -24,30 +24,51 @@ error_exit() {
 
 # Get the directory of the script (Bash-specific method)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# Change to the script's directory
-cd "$SCRIPT_DIR" || error_exit "Unable to change to script directory"
-
-# Retrieve Application Bundle path
-APP_BUNDLE_PATH=$(find "$SCRIPT_DIR" -maxdepth 1 -type d -name "*.app")
-APP_BUNDLE_NAME=$(echo "${APP_BUNDLE_PATH}"| xargs -I {} basename "{}")
+METADATA_FILE="${SCRIPT_DIR}/install.config"
+source "$METADATA_FILE"
+APP_NAME=$name
+APP_VERSION=$version
+APP_BUNDLE_NAME="$APP_NAME.app"
+APP_BUNDLE_PATH="$SCRIPT_DIR/$APP_BUNDLE_NAME"
 DEST_PATH="/Applications/${APP_BUNDLE_NAME}"
 
-# Move Application bundle to Applications directory
-if [ ! -e "${APP_BUNDLE_PATH}" ]; then
-    error_exit "Canot find application bundle in directory '${SCRIPT_DIR}'"
-fi
+info_message "Installing \"$APP_NAME\", version \"$APP_VERSION\""
+while true; do
+    read -p "Do you want to proceed? (y/n): " answer
 
-info_message "Moving ${APP_BUNDLE_NAME} to Applications folder (sudo password required)..."
-if [ -d "$DEST_PATH" ]; then
-    sudo rm -rf "$DEST_PATH"
-fi
+    # Convert to lowercase manually for compatibility
+    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
 
-sudo cp -R "$APP_BUNDLE_PATH" "$DEST_PATH"
+    case $answer in
+        y)
+            # Move Application bundle to Applications directory
+            if [ ! -e "${APP_BUNDLE_PATH}" ]; then
+                error_exit "Application bundle \"$APP_BUNDLE_PATH\" does not exist."
+            fi
 
-# Check if the move was successful
-if [ $? -eq 0 ]; then
-    info_message "${APP_BUNDLE_NAME} has been successfully moved to the Applications folder."
-else
-    error_exit "Error: Failed to move ${APP_BUNDLE_NAME} to the Applications folder."
-fi
+            info_message "Copying ${APP_BUNDLE_NAME} to Applications folder (sudo password required)..."
+            if [ -d "$DEST_PATH" ]; then
+                sudo rm -rf "$DEST_PATH"
+            fi
+
+            sudo cp -R "$APP_BUNDLE_PATH" "$DEST_PATH"
+
+            # Check if the move was successful
+            if [ $? -eq 0 ]; then
+                info_message "${APP_BUNDLE_NAME} has been copied to the Applications folder."
+            else
+                error_exit "Error: Failed to move ${APP_BUNDLE_NAME} to the Applications folder."
+            fi
+
+            info_message "Installation of $APP_NAME $APP_VERSION completed successfully."
+            break
+            ;;
+        n)
+            info_message "Cancelled by user."
+            exit 0
+            ;;
+        *)
+            info_message "Please enter 'y' or 'n'"
+            ;;
+    esac
+done

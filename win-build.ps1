@@ -20,7 +20,7 @@ $zipfile_path = Join-Path $PSScriptRoot "dist\$app_name`.zip"
 $note_color = "DarkCyan"
 
 Write-Host ":: Building app `"$app_name`", version `"$app_version`" ::" -ForegroundColor $note_color
-Start-Sleep 1
+Start-Sleep 2
 
 Write-Host ":: Activating Virtual Environment ::" -ForegroundColor $note_color
 try { deactivate } catch {}
@@ -44,9 +44,9 @@ if ( $LASTEXITCODE -ne 0 ) { throw "Build failed!" }
 
 Remove-Item $temp_specfile_path -Force
 
-# Copy-Item $resources_path $dist_path -Recurse -Force
+# Copy install files to dist directory
 Copy-Item $installation_files.FullName $dist_path -Recurse -Force
-
+Copy-Item README.md $dist_path -Force
 "name=$app_name" | Out-File $metadata_file -Encoding utf8 -Force
 "version=$app_version" | Out-File $metadata_file -Encoding utf8 -Force -Append
 
