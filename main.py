@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
 # Please preserve the formatting to avoid failures in build scripts.
 APP_NAME = "SimplePasswordManager"
 APP_DISPLAY_NAME = "Simple Password Manager"
-APP_VERSION = "1.0"
+APP_VERSION = "1.1"
 HOME_PAGE = "https://github.com/PavelStsefanovich/password-manager"
 
 OS_CONFIG = { # Add any platform-specific config

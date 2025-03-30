@@ -13,10 +13,10 @@ $venv = Join-Path $PSScriptRoot '.venv'
 $venv_activate = Join-Path $venv 'Scripts\activate.ps1'
 $installation_files = Get-ChildItem (Join-Path $PSScriptRoot 'install\win-*')
 $dist_path = Join-Path $PSScriptRoot "dist\$app_name"
-$metadata_file = Join-Path $dist_path 'metadata.config'
+$metadata_file = Join-Path $dist_path 'install.config'
 $specfile_path = Join-Path $PSScriptRoot "win-build.spec"
 $temp_specfile_path = Join-Path $PSScriptRoot "build.spec"
-$zipfile_path = Join-Path $PSScriptRoot "$app_name`.v$app_version`.zip"
+$zipfile_path = Join-Path $PSScriptRoot "dist\$app_name`.zip"
 $note_color = "DarkCyan"
 
 Write-Host ":: Building app `"$app_name`", version `"$app_version`" ::" -ForegroundColor $note_color
@@ -46,6 +46,7 @@ Remove-Item $temp_specfile_path -Force
 
 # Copy-Item $resources_path $dist_path -Recurse -Force
 Copy-Item $installation_files.FullName $dist_path -Recurse -Force
+
 "name=$app_name" | Out-File $metadata_file -Encoding utf8 -Force
 "version=$app_version" | Out-File $metadata_file -Encoding utf8 -Force -Append
 

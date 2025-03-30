@@ -80,7 +80,7 @@ function request_consent {
 ##########################################################################
 
 $ErrorActionPreference = 'Stop'
-$metadata_file = Join-Path $PSScriptRoot 'metadata.config'
+$metadata_file = Join-Path $PSScriptRoot 'install.config'
 
 newline
 info "Reading metadata file  : $metadata_file"
