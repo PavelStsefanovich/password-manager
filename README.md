@@ -83,7 +83,7 @@ Upgrade process is pretty sraight forward:
 
 ### MacOS
 1. Download pre-built package, or re-build from source (dont forget to run `git pull` first)
-2. Run `bash macos-install.sh` script, or just manually move SimplePasswordManager.app into /Applications directory.
+2. Run `bash macos-install.sh` script from package directory (such as `./package/SimplePasswordManager`), or just manually move SimplePasswordManager.app into /Applications directory.
 
 # Lastly
 If you experience any issues, I will be happy to hear about them, but please dont expect me to fix them immediately, as I do not actively maintain this project. You have the source, feel free to tune it to your needs.
