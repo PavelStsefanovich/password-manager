@@ -653,7 +653,7 @@ class PasswordManagerMainWindow(QMainWindow):
 
     def setup_ui(self):
         """Set up the main window UI"""
-        self.setWindowTitle("Secure Password Manager")
+        self.setWindowTitle(APP_DISPLAY_NAME)
         self.setMinimumSize(800, 600)
 
         # Main central widget and layout
@@ -811,6 +811,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def show_login_dialog(self):
         """Show the login dialog"""
         dialog = LoginDialog(self, main_config=self.main_config)
+        dialog.password_input.setFocus()
         result = dialog.exec()
 
         if result == QDialog.Accepted:
@@ -829,6 +830,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def new_database(self):
         """Create a new database"""
         dialog = LoginDialog(self, main_config=self.main_config, is_new_db=True)
+        dialog.password_input.setFocus()
         result = dialog.exec()
 
         if result == QDialog.Accepted:
@@ -846,6 +848,7 @@ class PasswordManagerMainWindow(QMainWindow):
     def open_database(self):
         """Open an existing database"""
         dialog = LoginDialog(self, main_config=self.main_config)
+        dialog.password_input.setFocus()
         result = dialog.exec()
 
         if result == QDialog.Accepted:
